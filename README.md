@@ -51,7 +51,8 @@ npm run dev
 📸 Preview
 
 <img width="1919" height="903" alt="image" src="https://github.com/user-attachments/assets/cc6a13df-b18f-400d-a22d-c79e8d7ea6d9" />
-![Uploading image.png…]()
+<img width="1912" height="908" alt="image" src="https://github.com/user-attachments/assets/e1968f3b-15d4-46da-9fed-1a9f69b39a93" />
+
 
 
 
