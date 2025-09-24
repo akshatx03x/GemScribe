@@ -12,7 +12,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Fix __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -26,18 +25,14 @@ app.use(cors({
     credentials: true,
 }));
 
-// Routes
 app.use("/api/auth", AuthRoute);
 
-// Production: Serve frontend static files
 if (process.env.NODE_ENV === "production") {
     const frontendPath = path.join(__dirname, "../frontend/dist");
     const fs = await import("fs");
 
     if (fs.existsSync(frontendPath)) {
         app.use(express.static(frontendPath));
-
-        // SPA fallback: serve index.html for any unknown routes
         app.get(/.*/, (req, res) => {
             res.sendFile(path.join(frontendPath, "index.html"));
         });
@@ -46,7 +41,6 @@ if (process.env.NODE_ENV === "production") {
     }
 }
 
-// DB Connection
 async function connectDB() {
     try {
         await mongoose.connect(process.env.MONGODB_CONN);
@@ -59,7 +53,6 @@ async function connectDB() {
 
 await connectDB();
 
-// Start server locally (skip in Vercel)
 if (!process.env.VERCEL) {
     app.listen(PORT, () => {
         console.log(`Server is running on PORT: ${PORT}`);
