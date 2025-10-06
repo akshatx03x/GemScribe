@@ -329,7 +329,7 @@ Output should be *valid Markdown*, ready to copy-paste into a GitHub repo.
         <div className="absolute bottom-1/4 left-1/2 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
       <div className="absolute bottom-10 right-10 w-full max-w-4xl p-8 z-50 flex flex-col items-end mobile-container-fix">
-        {isSearching && (
+        {isSearching && ( 
           <div className="w-full max-w-3xl mx-auto mb-6 flex flex-col items-center">
             <button
               onClick={handleGoBack}
