@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: [process.env.FRONTEND_URL || "http://localhost:5173", "https://gem-scribe.vercel.app"],
+    origin: [process.env.FRONTEND_URL || "http://localhost:5173", "https://gem-scribe.vercel.app", "https://gemscribee.onrender.com"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
