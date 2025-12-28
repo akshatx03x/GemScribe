@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { generateContent } from '../services/geminiService';
 
 const GeminiChatUI = forwardRef((props, ref) => {
   const [isSearching, setIsSearching] = useState(false);
@@ -12,163 +13,44 @@ const GeminiChatUI = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({
     generateReadme,
   }));
+
   const readmePromptTemplate = `
 You are an expert open-source documentation writer.
 Generate a *comprehensive, professional, and visually appealing README.md* file for a GitHub repository.
-
-📌 Repository Metadata:
-- Name: {repoName}
-- Owner: {owner}
-- Description: {description || 'No description provided'}
-- Primary Languages: {languages || 'Not specified'}
-- File Structure: {fileStructure || 'No files found'}
-
-⚡ Requirements:
-- ✨ Add relevant emojis throughout for visual appeal
-- 🎯 Use a modern, professional tone (engaging + helpful)
-- 📋 Include GitHub badges for:
-    - Top languages
-    - License
-    - Stars, Forks, Issues
-    - Build status (if relevant)
-- 🔧 Infer realistic features & details from languages and file structure
-- 💡 Provide practical and actionable examples (not placeholders)
-
-📖 README Structure:
-1. *🎯 Project Title & Tagline* - Use repo name as title
-    - Add a compelling tagline
-
-2. *📋 Badges* - Shields.io badges (functional, clickable)
-
-3. *📖 Description* - Engaging 2–3 paragraphs
-    - What it does, who it helps
-
-4. *✨ Key Features* - 4–8 bullets with emojis
-
-5. *🛠 Tech Stack* - Organized by Frontend, Backend, Database, Tools
-
-6. *🚀 Getting Started* - Prerequisites (with versions)
-    - Installation steps
-    - Environment setup
-    - First run instructions
-
-7. *💻 Usage* - Code examples (syntax highlighting)
-    - API endpoints / CLI usage
-    - Screenshot placeholders
-
-8. *📁 Project Structure* - Tree view of directories/files
-    - Brief explanation of key parts
-
-9. *🔧 Configuration* - Env vars & config options
-
-10. *🧪 Testing* - Commands to run tests
-    - Coverage / frameworks
-
-11. *🚀 Deployment* - Hosting steps (local + cloud)
-    - CI/CD info (if files exist)
-
-12. *🤝 Contributing* - Guidelines
-    - PR process
-    - Code of Conduct
-
-13. *📝 Changelog* - Link to updates
-
-14. *🆘 Troubleshooting & FAQ* - Common errors & fixes
-
-15. *📄 License* - License badge + text
-
-16. *👥 Authors & Acknowledgments* - Owner, contributors, credits
-
-17. *📞 Support & Contact* - Contact info
-    - Links to docs/discussions
-
-📌 Guidelines:
-- ✅ Consistent emojis per section
-- ✅ Proper Markdown formatting
-- ✅ Add tables for complex info
-
-- ✅ Call-to-action: ⭐ Star / 🍴 Fork / 📬 Issues
-
----
-Generate the README now using the above details.
-Output should be *valid Markdown*, ready to copy-paste into a GitHub repo.
 `;
 
-  /**
-   * Generates a prompt and triggers the AI to create a README with code blocks.
-   * @param {Object} repo The repository object containing details like name, private status, description, and url.
-   */
   const generateReadme = async (repo) => {
-    const displayQuery = `Make README for ${repo.name} with link ${repo.url}.`;
-    setQuery(displayQuery);
-
     const owner = repo.owner ? repo.owner.login : 'Not specified';
     const languages = repo.language || 'Not specified';
-    const fileStructure = 'No files found'; 
 
-    const readmeQuery = readmePromptTemplate
-      .replace('{repoName}', repo.name)
-      .replace('{owner}', owner)
-      .replace('{description}', repo.description || 'No description provided')
-      .replace('{languages}', languages)
-      .replace('{fileStructure}', fileStructure);
+    const readmeQuery = `
+Repository Name: ${repo.name}
+Owner: ${owner}
+Description: ${repo.description || 'No description'}
+Languages: ${languages}
 
+Generate README in valid markdown.
+`;
+
+    setQuery(`Make README for ${repo.name}`);
     await handleAsk(readmeQuery);
   };
 
-  /**
-   * Sends the query to the Gemini API and updates the response text.
-   * @param {string} [apiQuery=query] The query string. Defaults to the component's state.
-   */
+  // 🔥 ONLY CHANGE: BACKEND CALL
   const handleAsk = async (apiQuery = query) => {
-    if (apiQuery.trim() === '') {
-      return;
-    }
+    if (!apiQuery.trim()) return;
 
     setIsSearching(true);
-    setIsPreviewing(true); 
-    setResponseText(''); 
-    const payload = {
-      "contents": [
-        {
-          "parts": [
-            {
-              "text": apiQuery
-            }
-          ]
-        }
-      ]
-    };
+    setIsPreviewing(true);
+    setResponseText('');
 
     try {
-      const response = await fetch(URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch response from API');
-      }
-
-      const data = await response.json();
-      const answer = (data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response available').replace(/\*/g, '');
-      setResponseText(answer);
-      console.log('Response:', answer);
+      const answer = await generateContent(apiQuery);
+      setResponseText(answer.replace(/\*/g, ''));
     } catch (error) {
-      console.error('Error fetching response:', error.message);
-      setResponseText('Error: Unable to get response. Please try again.');
+      console.error('Gemini error:', error);
+      setResponseText('Error: Unable to get response.');
     }
-  };
-
-  const handleGoBack = () => {
-    setIsSearching(false);
-    setQuery('');
-    setResponseText('');
-    setIsCopied(false);
-    setIsPreviewing(true);
   };
 
   const handleKeyDown = (e) => {
@@ -192,63 +74,28 @@ Output should be *valid Markdown*, ready to copy-paste into a GitHub repo.
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js";
-    script.onload = () => {
-      setIsMarkdownLoaded(true);
-    };
-    script.onerror = () => {
-      console.error("Failed to load markdown-it library.");
-      setIsMarkdownLoaded(false);
-    };
+    script.onload = () => setIsMarkdownLoaded(true);
     document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
+    return () => document.head.removeChild(script);
   }, []);
 
   const handleCopy = () => {
-    const el = document.createElement('textarea');
-    el.value = responseText;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-
+    navigator.clipboard.writeText(responseText);
     setIsCopied(true);
-    setTimeout(() => {
-      setIsCopied(false);
-    }, 2000); 
+    setTimeout(() => setIsCopied(false), 2000);
   };
-
-  const handlePreview = () => {
-    setIsPreviewing(!isPreviewing);
-  };
-
-  const LoadingIndicator = () => (
-    <div className="flex flex-col py-30 items-center justify-center text-center h-full">
-      <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      <p className="text-zinc-400 text-lg font-medium">Generating Prompt...</p>
-      <p className="text-zinc-500 text-sm mt-2">This may take 10-20 seconds.</p>
-    </div>
-  );
 
   const renderMarkdownPreview = () => {
-    if (isMarkdownLoaded && typeof window.markdownit !== 'undefined') {
-      const md = window.markdownit({
-        html: true,
-        linkify: true,
-        typographer: true
-      });
+    if (isMarkdownLoaded && window.markdownit) {
+      const md = window.markdownit({ html: true, linkify: true });
       return { __html: md.render(responseText) };
     }
     return { __html: `<p>Loading preview...</p>` };
   };
 
   return (
-    <>
+    
+<>
       <style>
         {`
           .custom-scrollbar {
