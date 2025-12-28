@@ -52,6 +52,13 @@ Generate README in valid markdown.
       setResponseText('Error: Unable to get response.');
     }
   };
+const handleGoBack = () => {
+  setIsSearching(false);
+  setQuery('');
+  setResponseText('');
+  setIsCopied(false);
+  setIsPreviewing(true);
+};
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
