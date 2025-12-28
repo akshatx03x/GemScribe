@@ -1,24 +1,37 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 export const generateContent = async (req, res) => {
   try {
     const { prompt } = req.body;
 
-    if (!prompt) {
-      return res.status(400).json({ success: false, message: "Prompt is required" });
+    if (!prompt || prompt.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Prompt is required",
+      });
     }
 
     if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({ success: false, message: "Gemini API key not configured" });
+      return res.status(500).json({
+        success: false,
+        message: "Gemini API key not configured",
+      });
     }
+
+    // ✅ Initialize INSIDE the request
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
     });
 
     const result = await model.generateContent(prompt);
+
+    // ✅ SAFETY CHECK (prevents crash)
+    if (!result?.response) {
+      throw new Error("Empty response from Gemini");
+    }
+
     const text = result.response.text();
 
     res.status(200).json({
@@ -26,10 +39,11 @@ export const generateContent = async (req, res) => {
       response: text,
     });
   } catch (error) {
-    console.error("Gemini API error:", error);
+    console.error("Gemini API error:", error.message);
+
     res.status(500).json({
       success: false,
-      message: "Failed to generate content",
+      message: error.message || "Failed to generate content",
     });
   }
 };
