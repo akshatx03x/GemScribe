@@ -11,14 +11,21 @@ export const generateContent = async (req, res) => {
       });
     }
 
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: "Gemini API key missing",
+      });
+    }
+
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+    // ✅ ONLY VALID MODEL FOR v1beta
     const model = genAI.getGenerativeModel({
-      model: "models/gemini-pro", // ✅ FULL MODEL ID (IMPORTANT)
+      model: "models/gemini-1.0-pro",
     });
 
     const result = await model.generateContent(prompt);
-
     const text = result.response.text();
 
     return res.status(200).json({
@@ -26,11 +33,11 @@ export const generateContent = async (req, res) => {
       response: text,
     });
   } catch (error) {
-    console.error("Gemini API error FULL:", error);
+    console.error("Gemini API FINAL ERROR:", error);
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Gemini generation failed",
+      message: error.message,
     });
   }
 };
