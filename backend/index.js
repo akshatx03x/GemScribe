@@ -44,6 +44,11 @@ app.use(
 app.use("/api/auth", AuthRoute);
 app.use("/api/gemini", GeminiRoute);
 
+// Root route
+app.get("/", (req, res) => {
+  res.json({ message: "GemScribe API is running" });
+});
+
 // Serve frontend in production
 if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "../frontend/dist");
