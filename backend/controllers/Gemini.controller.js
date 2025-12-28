@@ -10,6 +10,10 @@ export const generateContent = async (req, res) => {
       return res.status(400).json({ success: false, message: "Prompt is required" });
     }
 
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ success: false, message: "Gemini API key not configured" });
+    }
+
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
     });

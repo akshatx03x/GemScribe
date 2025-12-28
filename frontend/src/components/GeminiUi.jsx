@@ -101,6 +101,10 @@ const handleGoBack = () => {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  const handlePreview = () => {
+    setIsPreviewing(!isPreviewing);
+  };
+
   const renderMarkdownPreview = () => {
     if (isMarkdownLoaded && window.markdownit) {
       const md = window.markdownit({ html: true, linkify: true });
