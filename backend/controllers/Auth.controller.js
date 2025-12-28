@@ -31,7 +31,7 @@ export const manualLogin = async (req, res) => {
     });
 
     res
-      .cookie("token", token, { httpOnly: true })
+      .cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' })
       .status(200)
       .json({ success: true, user, token });
   } catch (error) {
@@ -102,6 +102,8 @@ export const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     });
 
     res.status(200).json({
@@ -123,7 +125,15 @@ export const login = async (req, res) => {
 
 export const getUser = async (req, res) => {
   try {
-    const token = req.cookies.token;
+    let token = req.cookies.token;
+
+    // If no token in cookies, check Authorization header
+    if (!token && req.headers.authorization) {
+      const authHeader = req.headers.authorization;
+      if (authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
 
     if (!token) {
       return res.status(403).json({
@@ -133,7 +143,7 @@ export const getUser = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id).select("+githubToken");
 
     if (!user) {
       return res.status(404).json({
@@ -149,7 +159,8 @@ export const getUser = async (req, res) => {
         name: user.name,
         email: user.email,
         avatar: user.avatar,
-        provider: user.provider
+        provider: user.provider,
+        hasGithubToken: !!user.githubToken
       }
     });
   } catch (error) {
@@ -163,7 +174,7 @@ export const getUser = async (req, res) => {
 };
 export const logout = async (req, res) => {
   try {
-    res.clearCookie('token');
+    res.clearCookie('token', { secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
     res.status(200).json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
     console.error('Logout error:', error);
@@ -173,7 +184,16 @@ export const logout = async (req, res) => {
 
 export const getRepos = async (req, res) => {
   try {
-    const token = req.cookies.token;
+    let token = req.cookies.token;
+
+    // If no token in cookies, check Authorization header
+    if (!token && req.headers.authorization) {
+      const authHeader = req.headers.authorization;
+      if (authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
+
     if (!token) {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }

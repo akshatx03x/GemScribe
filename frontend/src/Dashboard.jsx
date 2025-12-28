@@ -2,11 +2,14 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import GeminiChatUI from "./components/GeminiUi.jsx";
 import { authService } from "./services/authService";
+import api from "./services/apiService";
 
 const Dashboard = () => {
   const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  const [needsGithubAuth, setNeedsGithubAuth] = useState(false);
   const navigate = useNavigate();
   const geminiChatRef = useRef(null);
 
@@ -23,9 +26,51 @@ const Dashboard = () => {
     }
   };
 
+  const handleGithubLogin = async () => {
+    try {
+      setError("");
+      const result = await signInWithPopup(auth, githubProvider);
+      const userData = {
+        name: result.user.displayName,
+        email: result.user.email,
+        phoneNumber: result.user.phoneNumber,
+        avatar: result.user.photoURL,
+        provider: "github",
+        githubToken: result._tokenResponse.oauthAccessToken,
+      };
+
+      const responseData = await authService.googleLogin(userData);
+      console.log('GitHub Login Success:', responseData);
+
+      if (responseData.success) {
+        localStorage.setItem('token', responseData.token);
+        // Refresh the dashboard to show repos
+        window.location.reload();
+      } else {
+        throw new Error(responseData.message || 'GitHub login failed');
+      }
+    } catch (error) {
+      console.error("GitHub Login Error:", error.message);
+      setError("Failed to connect to GitHub. Please try again.");
+    }
+  };
+
   useEffect(() => {
-    const fetchRepos = async () => {
+    const initializeDashboard = async () => {
       try {
+        // First, get user info to check authentication method
+        const userResponse = await api.get('/auth/get-user');
+        const userData = userResponse.data;
+        setUser(userData.user);
+
+        // If user doesn't have GitHub token, they need GitHub auth for repos
+        if (!userData.user.hasGithubToken) {
+          setNeedsGithubAuth(true);
+          setLoading(false);
+          return;
+        }
+
+        // If user has GitHub auth, fetch repos
         const data = await authService.getRepos();
         if (data.success && Array.isArray(data.repos)) {
           setRepos(data.repos);
@@ -44,7 +89,7 @@ const Dashboard = () => {
       }
     };
 
-    fetchRepos();
+    initializeDashboard();
   }, [navigate]);
 
   const handleMakeReadme = (repo) => {
@@ -120,7 +165,28 @@ const Dashboard = () => {
           </h1>
         </div>
 
-        {repos.length === 0 ? (
+        {needsGithubAuth ? (
+          <div className="text-center bg-zinc-800/40 backdrop-blur-md p-8 rounded-2xl border border-zinc-700/30">
+            <div className="mb-6">
+              <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              </svg>
+              <h3 className="text-xl font-semibold text-zinc-100 mb-2">Connect to GitHub</h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                You logged in with Google. To access your GitHub repositories and generate READMEs, please connect your GitHub account.
+              </p>
+            </div>
+            <button
+              onClick={handleGithubLogin}
+              className="w-full flex items-center justify-center gap-3 bg-gray-800/50 backdrop-blur-md border border-gray-700/50 hover:bg-gray-700/50 text-gray-200 py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              </svg>
+              Connect GitHub Account
+            </button>
+          </div>
+        ) : repos.length === 0 ? (
           <p className="text-zinc-500 text-base leading-relaxed bg-zinc-800/40 backdrop-blur-md p-5 rounded-2xl border border-zinc-700/30">
             No repositories found. Ensure you're logged in with GitHub and have granted repository access.
           </p>

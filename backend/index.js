@@ -18,8 +18,12 @@ const __dirname = path.dirname(__filename);
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  next();
+});
 app.use(cors({
-    origin: [process.env.FRONTEND_URL || "http://localhost:5173", "https://gem-scribe.vercel.app", "https://gemscribee.onrender.com"],
+    origin: [process.env.FRONTEND_URL || "http://localhost:5173", "http://localhost:5174", "https://gem-scribe.vercel.app", "https://gemscribee.onrender.com", "https://gemscribe.onrender.com"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
