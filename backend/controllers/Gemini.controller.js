@@ -18,20 +18,13 @@ export const generateContent = async (req, res) => {
       });
     }
 
-    // ✅ Initialize INSIDE the request
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-pro", // ✅ FIXED
     });
 
     const result = await model.generateContent(prompt);
-
-    // ✅ SAFETY CHECK (prevents crash)
-    if (!result?.response) {
-      throw new Error("Empty response from Gemini");
-    }
-
     const text = result.response.text();
 
     res.status(200).json({
@@ -43,7 +36,7 @@ export const generateContent = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: error.message || "Failed to generate content",
+      message: error.message,
     });
   }
 };
