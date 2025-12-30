@@ -51,22 +51,23 @@ const handleAsk = async (apiQuery = query) => {
 
   setIsSearching(true);
   setIsPreviewing(true);
-  setResponseText('');
+  setResponseText(''); 
 
   try {
-    // Calling the updated service
     const answer = await generateContent(apiQuery);
     
-    // 🔥 CHANGE: Update state with the string returned from service
     if (answer) {
-        setResponseText(answer);
-        setQuery(''); // Clear input on success
+        // 🔥 CLEANUP: Remove the triple backticks if they exist at the start/end
+        // This ensures markdown-it renders the actual headers and lists
+        const cleanAnswer = answer.replace(/^```markdown\n|```$/g, '');
+        
+        setResponseText(cleanAnswer);
+        setQuery(''); 
     } else {
         setResponseText("Received an empty response from the server.");
     }
   } catch (error) {
     console.error('Frontend UI Error:', error);
-    // Show a descriptive error message to the user
     setResponseText(`Error: ${error.response?.data?.message || error.message}`);
   } finally {
     setIsSearching(false);
@@ -116,13 +117,22 @@ const handleGoBack = () => {
     setIsPreviewing(!isPreviewing);
   };
 
-  const renderMarkdownPreview = () => {
-    if (isMarkdownLoaded && window.markdownit) {
-      const md = window.markdownit({ html: true, linkify: true });
-      return { __html: md.render(responseText) };
-    }
-    return { __html: `<p>Loading preview...</p>` };
-  };
+const renderMarkdownPreview = () => {
+  // Check if library is available
+  if (isMarkdownLoaded && window.markdownit) {
+    const md = window.markdownit({ 
+        html: true, 
+        linkify: true,
+        breaks: true // Ensures line breaks work correctly
+    });
+    
+    // Fallback if responseText is somehow empty during render
+    return { __html: md.render(responseText || '') };
+  }
+  
+  // Show a fallback while loading or if it fails
+  return { __html: `<p style="color: #666">Formatting your README...</p>` };
+};
 
   return (
     
