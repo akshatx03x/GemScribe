@@ -30,24 +30,54 @@ Generate a *comprehensive, professional, and visually appealing README.md* file 
 
 const generateReadme = async (repo) => {
   const readmeQuery = `
-You are an expert open-source documentation writer.
-Generate a *comprehensive, professional, and visually appealing README.md* file for a GitHub repository.
-    Generate a README.md for the GitHub repository "${repo.name}".
-    
-    STRICT RULES:
-    1. Do NOT make up fake "About Me" sections.
-    2. Include sections like Installation, Usage, Contributing, License, and Contact.
-    3. Use a professional, minimal GitHub style.
-    4. Focus on Code Structure and Installation.
-    
-    DATA:
-    Repo Name: ${repo.name}
-    Tech Stack: ${repo.language}
-    Description: ${repo.description || 'A technical project focused on ' + repo.name}
+You are a senior open-source maintainer and technical writer.
+
+Your task is to generate a HIGH-QUALITY, REAL-WORLD, PRODUCTION-READY README.md
+for a GitHub repository.
+
+IMPORTANT ASSUMPTIONS (MANDATORY):
+- This is a REAL engineering project, not an empty or demo repo.
+- If description or tech stack is missing, intelligently infer it from the repo name.
+- NEVER say "No description provided", "Not specified", or similar filler text.
+- NEVER mention missing data or limitations.
+- DO NOT add personal stories, "About Me", or hackathon narratives unless explicitly told.
+
+STYLE RULES:
+- Professional GitHub tone (clean, confident, concise)
+- Markdown only (NO backticks around the README)
+- No emojis overload (use minimal or none)
+- Write as if this README will be read by recruiters & contributors
+
+REQUIRED SECTIONS (IN THIS ORDER):
+1. Project Title
+2. Short Description (1–2 lines, confident and concrete)
+3. Key Features (bullet points)
+4. Tech Stack
+5. Project Structure (folder-level overview)
+6. Installation & Setup
+7. Usage
+8. Environment Variables
+9. Contributing
+10. License
+11. Contact
+
+DATA YOU CAN USE:
+- Repo Name: ${repo.name}
+- Primary Language: ${repo.language || "JavaScript / TypeScript"}
+- Description Hint: ${repo.description || repo.name + " application"}
+
+ABSOLUTE RESTRICTIONS:
+- No placeholder text
+- No vague statements
+- No repetition
+- No fabricated licenses or links
+
+Generate the README now.
   `;
 
   await handleAsk(readmeQuery);
 };
+
 
   // 🔥 ONLY CHANGE: BACKEND CALL
 const handleAsk = async (apiQuery = query) => {
