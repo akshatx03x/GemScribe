@@ -69,8 +69,6 @@ const handleAsk = async (apiQuery = query) => {
   } catch (error) {
     console.error('Frontend UI Error:', error);
     setResponseText(`Error: ${error.response?.data?.message || error.message}`);
-  } finally {
-    setIsSearching(false);
   }
 };
 const handleGoBack = () => {
