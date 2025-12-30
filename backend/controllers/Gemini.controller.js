@@ -17,7 +17,7 @@ export const generateContent = async (req, res) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 2000 },
+        generationConfig: { temperature: 0.9, maxOutputTokens: 2500 },
         // IMPORTANT: Safety settings prevent empty responses on code/technical prompts
         safetySettings: [
           { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },

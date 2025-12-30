@@ -28,22 +28,28 @@ You are an expert open-source documentation writer.
 Generate a *comprehensive, professional, and visually appealing README.md* file for a GitHub repository.
 `;
 
-  const generateReadme = async (repo) => {
-    const owner = repo.owner ? repo.owner.login : 'Not specified';
-    const languages = repo.language || 'Not specified';
+const generateReadme = async (repo) => {
+  const owner = repo.owner ? repo.owner.login : 'akshatx03x';
+  const languages = repo.language || 'JavaScript, React, Node.js'; // Provide defaults if empty
 
-    const readmeQuery = `
-Repository Name: ${repo.name}
-Owner: ${owner}
-Description: ${repo.description || 'No description'}
-Languages: ${languages}
+  const readmeQuery = `
+    You are a professional technical writer. 
+    Generate a high-quality README.md for the following GitHub repository:
+    
+    Repository Name: ${repo.name}
+    Owner: ${owner}
+    Primary Technologies: ${languages}
+    
+    Instructions:
+    1. Create a catchy title and a professional "About" section.
+    2. Invent a standard "Installation" and "Usage" guide based on the technologies used.
+    3. Add sections for Features, Contributing, and License.
+    4. Use emojis and clean Markdown formatting.
+  `;
 
-Generate README in valid markdown.
-`;
-
-    setQuery(`Make README for ${repo.name}`);
-    await handleAsk(readmeQuery);
-  };
+  setQuery(`Improving README for ${repo.name}...`);
+  await handleAsk(readmeQuery);
+};
 
   // 🔥 ONLY CHANGE: BACKEND CALL
 const handleAsk = async (apiQuery = query) => {
@@ -57,11 +63,7 @@ const handleAsk = async (apiQuery = query) => {
     const answer = await generateContent(apiQuery);
     
     if (answer) {
-        // 🔥 CLEANUP: Remove the triple backticks if they exist at the start/end
-        // This ensures markdown-it renders the actual headers and lists
-        const cleanAnswer = answer.replace(/^```markdown\n|```$/g, '');
-        
-        setResponseText(cleanAnswer);
+        setResponseText(answer);
         setQuery(''); 
     } else {
         setResponseText("Received an empty response from the server.");
