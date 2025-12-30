@@ -81,12 +81,13 @@ const handleGoBack = () => {
   setIsPreviewing(true);
 };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleAsk();
-    }
-  };
+const handleKeyDown = (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault(); // 🔥 STOP RELOAD
+    e.stopPropagation(); // 🔥 STOP EVENT BUBBLING
+    handleAsk();
+  }
+};
 
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
@@ -118,20 +119,17 @@ const handleGoBack = () => {
   };
 
 const renderMarkdownPreview = () => {
-  // Check if library is available
   if (isMarkdownLoaded && window.markdownit) {
     const md = window.markdownit({ 
-        html: true, 
-        linkify: true,
-        breaks: true // Ensures line breaks work correctly
+      html: true, 
+      linkify: true,
+      breaks: true 
     });
-    
-    // Fallback if responseText is somehow empty during render
     return { __html: md.render(responseText || '') };
   }
   
-  // Show a fallback while loading or if it fails
-  return { __html: `<p style="color: #666">Formatting your README...</p>` };
+  // 🔥 FALLBACK: If the library isn't loaded yet, show raw text so it's not blank
+  return { __html: `<pre style="white-space: pre-wrap; color: white;">${responseText}</pre>` };
 };
 
   return (
@@ -287,9 +285,13 @@ const renderMarkdownPreview = () => {
               />
             </div>
             <button
-              className="p-2 rounded-full text-zinc-400 hover:text-blue-300 hover:bg-zinc-700/50 transition-colors duration-200"
-              onClick={() => handleAsk()}
-            >
+  type="button" // 🔥 IMPORTANT: Prevents accidental form submission
+  className="p-2 rounded-full text-zinc-400 hover:text-blue-300 hover:bg-zinc-700/50 transition-colors duration-200"
+  onClick={(e) => {
+    e.preventDefault(); // 🔥 STOP RELOAD
+    handleAsk();
+  }}
+>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 12h14" />
               </svg>

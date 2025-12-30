@@ -37,8 +37,17 @@ export const generateContent = async (req, res) => {
         message: data.error?.message || "Gemini API failed",
       });
     }
+// Inside your backend controller success block
+const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+if (aiText) {
+  // Clean the text: remove the backticks if the AI added them
+  const cleanText = aiText.replace(/^```markdown\n|```$/g, '');
+  return res.status(200).json({
+    success: true,
+    response: cleanText,
+  });
+}
 
     // We send back 'success: true' and 'response: aiText'
     return res.status(200).json({
