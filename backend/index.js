@@ -35,10 +35,12 @@ app.use(
       "https://gemscribe.onrender.com",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "authorization", "Authorization"],
     credentials: true,
   })
 );
+
+
 
 // ✅ ROUTES (AFTER app is defined)
 app.use("/api/auth", AuthRoute);

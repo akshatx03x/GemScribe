@@ -46,21 +46,32 @@ Generate README in valid markdown.
   };
 
   // 🔥 ONLY CHANGE: BACKEND CALL
-  const handleAsk = async (apiQuery = query) => {
-    if (!apiQuery.trim()) return;
+const handleAsk = async (apiQuery = query) => {
+  if (!apiQuery || !apiQuery.trim()) return;
 
-    setIsSearching(true);
-    setIsPreviewing(true);
-    setResponseText('');
+  setIsSearching(true);
+  setIsPreviewing(true);
+  setResponseText('');
 
-    try {
-      const answer = await generateContent(apiQuery);
-      setResponseText(answer.replace(/\*/g, ''));
-    } catch (error) {
-      console.error('Gemini error:', error);
-      setResponseText('Error: Unable to get response.');
+  try {
+    // Calling the updated service
+    const answer = await generateContent(apiQuery);
+    
+    // 🔥 CHANGE: Update state with the string returned from service
+    if (answer) {
+        setResponseText(answer);
+        setQuery(''); // Clear input on success
+    } else {
+        setResponseText("Received an empty response from the server.");
     }
-  };
+  } catch (error) {
+    console.error('Frontend UI Error:', error);
+    // Show a descriptive error message to the user
+    setResponseText(`Error: ${error.response?.data?.message || error.message}`);
+  } finally {
+    setIsSearching(false);
+  }
+};
 const handleGoBack = () => {
   setIsSearching(false);
   setQuery('');
