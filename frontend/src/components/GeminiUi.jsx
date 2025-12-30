@@ -29,25 +29,23 @@ Generate a *comprehensive, professional, and visually appealing README.md* file 
 `;
 
 const generateReadme = async (repo) => {
-  const owner = repo.owner ? repo.owner.login : 'akshatx03x';
-  const languages = repo.language || 'JavaScript, React, Node.js'; // Provide defaults if empty
-
   const readmeQuery = `
-    You are a professional technical writer. 
-    Generate a high-quality README.md for the following GitHub repository:
+You are an expert open-source documentation writer.
+Generate a *comprehensive, professional, and visually appealing README.md* file for a GitHub repository.
+    Generate a README.md for the GitHub repository "${repo.name}".
     
-    Repository Name: ${repo.name}
-    Owner: ${owner}
-    Primary Technologies: ${languages}
+    STRICT RULES:
+    1. Do NOT make up fake "About Me" sections.
+    2. Include sections like Installation, Usage, Contributing, License, and Contact.
+    3. Use a professional, minimal GitHub style.
+    4. Focus on Code Structure and Installation.
     
-    Instructions:
-    1. Create a catchy title and a professional "About" section.
-    2. Invent a standard "Installation" and "Usage" guide based on the technologies used.
-    3. Add sections for Features, Contributing, and License.
-    4. Use emojis and clean Markdown formatting.
+    DATA:
+    Repo Name: ${repo.name}
+    Tech Stack: ${repo.language}
+    Description: ${repo.description || 'A technical project focused on ' + repo.name}
   `;
 
-  setQuery(`Improving README for ${repo.name}...`);
   await handleAsk(readmeQuery);
 };
 
